@@ -408,21 +408,25 @@ theorem map_zipWithAll {δ : Type _} {f : α → β} {g : Option γ → Option �
 
 /-! ### unzip -/
 
-@[simp] theorem unzip_fst : (unzip l).fst = l.map Prod.fst := by
-  induction l <;> simp_all
-
-@[simp] theorem unzip_snd : (unzip l).snd = l.map Prod.snd := by
-  induction l <;> simp_all
-
 theorem unzip_eq_map : ∀ {l : List (α × β)}, unzip l = (l.map Prod.fst, l.map Prod.snd)
   | [] => rfl
   | (a, b) :: l => by simp only [unzip_cons, map_cons, unzip_eq_map (l := l)]
 
-theorem getElem?_fst_unzip {l : List (α × β)} {i : Nat} :
-    (unzip l).fst[i]? = l[i]?.map Prod.fst := by simp
+theorem fst_unzip : (unzip l).fst = l.map Prod.fst := by rw [unzip_eq_map]
 
-theorem getElem?_snd_unzip {l : List (α × β)} {i : Nat} :
-    (unzip l).snd[i]? = l[i]?.map Prod.snd := by simp
+@[deprecated fst_unzip (since := "2025-06-06")]
+theorem unzip_fst : (unzip l).fst = l.map Prod.fst := fst_unzip
+
+theorem snd_unzip : (unzip l).snd = l.map Prod.snd := by rw [unzip_eq_map]
+
+@[deprecated snd_unzip (since := "2025-06-06")]
+theorem unzip_snd : (unzip l).snd = l.map Prod.snd := snd_unzip
+
+@[simp] theorem getElem?_fst_unzip {l : List (α × β)} {i : Nat} :
+    (unzip l).fst[i]? = l[i]?.map Prod.fst := by rw [unzip_eq_map, getElem?_map]
+
+@[simp] theorem getElem?_snd_unzip {l : List (α × β)} {i : Nat} :
+    (unzip l).snd[i]? = l[i]?.map Prod.snd := by rw [unzip_eq_map, getElem?_map]
 
 theorem getElem?_fst_unzip_eq_some {l : List (α × β)} {i : Nat} :
     (unzip l).fst[i]? = some a ↔ ∃ b, l[i]? = some (a, b) := by simp
@@ -431,10 +435,10 @@ theorem getElem?_snd_unzip_eq_some {l : List (α × β)} {i : Nat} :
     (unzip l).snd[i]? = some b ↔ ∃ a, l[i]? = some (a, b) := by simp
 
 theorem length_fst_unzip {l : List (α × β)} :
-    length (unzip l).fst = l.length := by simp
+    length (unzip l).fst = l.length := by rw [unzip_eq_map, length_map]
 
 theorem length_snd_unzip {l : List (α × β)} :
-    length (unzip l).snd = l.length := by simp
+    length (unzip l).snd = l.length := by rw [unzip_eq_map, length_map]
 
 theorem lt_length_of_unzip_fst {i : Nat} {l : List (α × β)} (h : i < (unzip l).fst.length) :
     i < l.length := lt_of_lt_of_eq h length_fst_unzip
@@ -443,10 +447,12 @@ theorem lt_length_of_unzip_snd {i : Nat} {l : List (α × β)} (h : i < (unzip l
     i < l.length := lt_of_lt_of_eq h length_snd_unzip
 
 theorem getElem_fst_unzip {l : List (α × β)} {i : Nat} {h : i < (unzip l).fst.length} :
-    (unzip l).fst[i] = (l[i]'(lt_length_of_unzip_fst h)).fst := by simp
+    (unzip l).fst[i] = (l[i]'(lt_length_of_unzip_fst h)).fst := by
+  simp only [unzip_eq_map, getElem_map]
 
 theorem getElem_snd_unzip {l : List (α × β)} {i : Nat} {h : i < (unzip l).snd.length} :
-    (unzip l).snd[i] = (l[i]'(lt_length_of_unzip_snd h)).snd := by simp
+    (unzip l).snd[i] = (l[i]'(lt_length_of_unzip_snd h)).snd := by
+  simp only [unzip_eq_map, getElem_map]
 
 -- The argument `l` is explicit so we can rewrite from right to left.
 theorem zip_unzip : ∀ l : List (α × β), zip (unzip l).1 (unzip l).2 = l
@@ -475,13 +481,13 @@ theorem unzip_zip {l₁ : List α} {l₂ : List β} (h : length l₁ = length l�
 
 theorem zip_of_prod {l : List α} {l' : List β} {xs : List (α × β)} (hl : xs.map Prod.fst = l)
     (hr : xs.map Prod.snd = l') : xs = l.zip l' := by
-  rw [← hl, ← hr, ← zip_unzip xs, ← unzip_fst, ← unzip_snd, zip_unzip, zip_unzip]
+  rw [← hl, ← hr, ← zip_unzip xs, ← fst_unzip, ← snd_unzip, zip_unzip, zip_unzip]
 
-theorem tail_zip_fst {l : List (α × β)} : l.unzip.1.tail = l.tail.unzip.1 := by
-  simp
+theorem tail_zip_fst {l : List (α × β)} : l.unzip.1.tail = l.tail.unzip.1 :=
+  List.ext_getElem? <| fun _ => by simp only [getElem?_tail, getElem?_fst_unzip]
 
-theorem tail_zip_snd {l : List (α × β)} : l.unzip.2.tail = l.tail.unzip.2 := by
-  simp
+theorem tail_zip_snd {l : List (α × β)} : l.unzip.2.tail = l.tail.unzip.2 :=
+  List.ext_getElem? <| fun _ => by simp only [getElem?_tail, getElem?_snd_unzip]
 
 @[simp] theorem unzip_replicate {n : Nat} {a : α} {b : β} :
     unzip (replicate n (a, b)) = (replicate n a, replicate n b) := by

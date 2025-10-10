@@ -2060,7 +2060,7 @@ def unzip : (l : List (α × β)) → List α × List β
 
 @[simp] theorem unzip_nil : ([] : List (α × β)).unzip = ([], []) := rfl
 @[simp] theorem unzip_cons {h : α × β} :
-    (h :: t).unzip = match unzip t with | (as, bs) => (h.1::as, h.2::bs) := rfl
+    (h :: t).unzip = (h.1::(unzip t).1, h.2::(unzip t).2) := rfl
 
 /-! ## Ranges and enumeration -/
 
